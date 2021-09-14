@@ -1,27 +1,32 @@
 import json
 from nltk.corpus import wordnet
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_restful import Resource, Api, reqparse
 import pandas as pd
 import ast
+from google_auth_oauthlib.flow import Flow
+from googleapiclient.discovery import build
+import datetime
 
 # NLP related imports
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 EXPLAIN = True
-# import nltk
-# nltk.download('wordnet')
-# from nltk.corpus import stopwords
-# from nltk.tokenize import word_tokenize
 
 app = Flask(__name__)
 api = Api(app)
 
-# learned from https://towardsdatascience.com/the-right-way-to-build-an-api-with-python-cd08ab285f8f
-
+flow = Flow.from_client_secrets_file(
+    './auth/desktop-google-oauth.json',
+    scopes=['https://www.googleapis.com/auth/calendar.app.created', 'https://www.googleapis.com/auth/userinfo.profile',
+            'https://www.googleapis.com/auth/userinfo.email', 'openid', 'https://www.googleapis.com/auth/calendar.events'],
+    redirect_uri='postmessage',
+)
 
 # compare all the synsets of each pair of a word in w1(event) and w2(scenario)
+
+
 def word_similiarity(w1, w2):
     sl1 = wordnet.synsets(w1)
     sl2 = wordnet.synsets(w2)
@@ -34,7 +39,7 @@ def word_similiarity(w1, w2):
         }
     for x in sl1:
         for y in sl2:
-            #           Use WUP similarity algorithm here
+            # Use WUP similarity algorithm here
             score = x.wup_similarity(y)
             max_score = max(max_score, score if score else 0)
             if EXPLAIN and score == max_score:
@@ -106,7 +111,6 @@ def check_2_sentence_similarities(X, Y, USE_WORDNET_SIMILARITY=True):
                 l2.append(0)
             if EXPLAIN:
                 print(f' → word in scenario: "{w}", analysis | ', l2[-1])
-#
     if EXPLAIN:
         print(
             f' event {X_set} makes vector: {l1} and scenario {Y_set} makes vector: {l2}')
@@ -124,48 +128,16 @@ def check_2_sentence_similarities(X, Y, USE_WORDNET_SIMILARITY=True):
 
 sp_df = pd.read_csv('principles.csv')
 
-# for idx, row in df.iterrows():
-#     print(row['principle'])
-# return top 5 principles/habits that matches the best with the event
-
-# def find_principles(event, sp_pairs):
-#     sorted_sp_paris = sorted([(check_2_sentence_similarities(event, senario), principle) for senario, principle in sp_pairs.items()])[::-1]
-#     return [pair[1] for pair in sorted_sp_paris if pair[0]][:5]
-
 
 def find_principles(event, sp_df):
     sorted_sp_paris = sorted([(check_2_sentence_similarities(
         event, row['scenario']), row['principle']) for idx, row in sp_df.iterrows()])[::-1]
     return [pair[1] for pair in sorted_sp_paris if pair[0]][:5]
 
-# sp_pairs = {
-#                 "Startup Meeting": "example principle for Startup Meeting: Always confirm avalibility and time",
-#                 "Need to become confident": "example principle for Need to become confident: Power-poses boosts confidence",
-#                 "eat breakfast": "example principle for eat breakfast",
-#                 "excersize": "example principle for excersize",
-#                 "angry": "example principle for angry",
-#                 "software debugging": "example principle for software debugging",
-#                 "Brainstorming Session": "example principle for Brainstorming Session"
-#            }
-
-# def find_principles(event, sp_pairs):
-#     sorted_sp_paris = sorted([(check_2_sentence_similarities(event, senario), principle) for senario, principle in sp_pairs.items()])[::-1]
-#     return [pair[1] for pair in sorted_sp_paris if pair[0]][:5]
-
-
-# event = "weekly company call"
-# event = "pair programming"
-# event = "lunch with client"
-
-# print(f'*** most recommended principles found for event \"{event}\" are {find_principles(event, sp_pairs)} ***')
 
 # define Users class as an endpoint for our API, and so we can pass Resource in with the class definition.
 class Users(Resource):
     def get(self):
-        # data = pd.read_csv('users.csv')  # read CSV
-        # data = data.to_dict()  # convert dataframe to dictionary
-
-        # return {'data': data}, 200  # return data and 200 OK code
         response = jsonify({'hello': "world"})
         response.status_code = 200
         return response
@@ -175,37 +147,44 @@ class Users(Resource):
 
         parser.add_argument('userId', required=True)  # add args
         parser.add_argument('event', required=True)
-        # parser.add_argument('city', required=True)
 
         args = parser.parse_args()  # parse arguments to dictionary
 
-        # create new dataframe containing new values
-        # new_data = pd.DataFrame({
-        #     'userId': args['userId'],
-        #     'event': args['event'],
-        #     'city': "waterloo",
-        #     'locations': [[]]
-        # })
-
-        # import pdb; pdb.set_trace()
-        # read our CSV
-        # data = pd.read_csv('users.csv')
-        # add the newly provided values
-        # data = data.append(new_data, ignore_index=True)
-        # save back to CSV
-        # data.to_csv('users.csv', index=False)
         event = args['event']
-        # print(f'*** most recommended principles found for event \"{event}\" are {find_principles(event, sp_pairs)} ***')
-        # return data with 200 OK
         response = jsonify(
             {'event': event, 'principles': find_principles(event, sp_df)})
         response.status_code = 200
         return response
-        # return {'data':f'{new_data['event'].tolist()}' }, 200  # return data with 200 OK
-        # return {'data':f'{event}' }, 200
 
 
 api.add_resource(Users, '/users')  # '/users' is our entry point
+
+
+@app.route('/verifyGoogleAuthCode', methods=['POST'])
+def verify_google_auth_code():
+    body = request.get_json()
+    print(f'Request body {body}')
+    flow.fetch_token(code=body['code'])
+    print(f'Creds {flow.credentials}')
+
+    service = build('calendar', 'v3', credentials=flow.credentials)
+
+    # Call the Calendar API
+    now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
+    print('Getting the upcoming 10 events')
+    events_result = service.events().list(calendarId='primary', timeMin=now,
+                                          maxResults=10, singleEvents=True,
+                                          orderBy='startTime').execute()
+    events = events_result.get('items', [])
+
+    if not events:
+        print('No upcoming events found.')
+    for event in events:
+        start = event['start'].get('dateTime', event['start'].get('date'))
+        print(start, event['summary'])
+
+    return '', 200
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)  # run our Flask app

@@ -1,7 +1,6 @@
 import json
 from nltk.corpus import wordnet
 from flask import Flask, jsonify, request
-from flask_restful import Resource, Api, reqparse
 import pandas as pd
 import ast
 from google_auth_oauthlib.flow import Flow
@@ -15,7 +14,6 @@ from nltk.tokenize import word_tokenize
 EXPLAIN = True
 
 app = Flask(__name__)
-api = Api(app)
 
 flow = Flow.from_client_secrets_file(
     './auth/desktop-google-oauth.json',
@@ -135,29 +133,14 @@ def find_principles(event, sp_df):
     return [pair[1] for pair in sorted_sp_paris if pair[0]][:5]
 
 
-# define Users class as an endpoint for our API, and so we can pass Resource in with the class definition.
-class Users(Resource):
-    def get(self):
-        response = jsonify({'hello': "world"})
-        response.status_code = 200
-        return response
-
-    def post(self):
-        parser = reqparse.RequestParser()  # initialize
-
-        parser.add_argument('userId', required=True)  # add args
-        parser.add_argument('event', required=True)
-
-        args = parser.parse_args()  # parse arguments to dictionary
-
-        event = args['event']
-        response = jsonify(
-            {'event': event, 'principles': find_principles(event, sp_df)})
-        response.status_code = 200
-        return response
-
-
-api.add_resource(Users, '/users')  # '/users' is our entry point
+@app.route('/users', methods=['GET', 'POST'])
+def users():
+    if request.method == 'GET':
+        return jsonify({'hello': "world"}), 200
+    else:
+        body = request.json
+        event = body['event']
+        return jsonify({'event': event, 'principles': find_principles(event, sp_df)}), 200
 
 
 @app.route('/verifyGoogleAuthCode', methods=['POST'])

@@ -12,12 +12,12 @@ app = Flask(__name__)
 
 flow = Flow.from_client_secrets_file(
     './auth/desktop-google-oauth.json',
-    scopes=['https://www.googleapis.com/auth/calendar.app.created', 'https://www.googleapis.com/auth/userinfo.profile',
-            'https://www.googleapis.com/auth/userinfo.email', 'openid', 'https://www.googleapis.com/auth/calendar.events'],
+    scopes=['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/userinfo.profile',
+            'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/calendar.app.created', 'openid', 'https://www.googleapis.com/auth/calendar.events'],
     redirect_uri='postmessage',
 )
-
 ml_client = UpNlpClient('principles.csv')
+'''
 db_client = MongoClient(port=27017)
 db = db_client.admin.up_database_test
 
@@ -26,6 +26,7 @@ print(result)
 
 crypt = SecurityClient(config('SECRET_KEY'), config('SECRET_PASSWORD'))
 print(crypt.encryptPayload({'hello': 'world'}))
+'''
 
 
 @app.route('/principleFromEvent', methods=['GET', 'POST'])
@@ -35,6 +36,7 @@ def principle_from_event():
     else:
         body = request.json
         event = body['event']
+        print(event)
         return jsonify({'event': event, 'principles': ml_client.find_principles(event)}), 200
 
 

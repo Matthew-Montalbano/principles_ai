@@ -5,7 +5,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import pandas as pd
 
-EXPLAIN = True
+EXPLAIN = False
 
 # compare all the synsets of each pair of a word in w1(event) and w2(scenario)
 
@@ -42,7 +42,8 @@ class UpNlpClient:
     # Return cosine similiarities between 2 sentences
 
     def check_2_sentence_similarities(self, X, Y, USE_WORDNET_SIMILARITY=True):
-        print(f'--- compare between event "{X}" and scenario "{Y}" ---')
+        if EXPLAIN:
+            print(f'--- compare between event "{X}" and scenario "{Y}" ---')
 
         # tokenization and normalization
         X_list = [w.lower() for w in word_tokenize(X)]
@@ -109,8 +110,9 @@ class UpNlpClient:
             c += l1[i]*l2[i]
         # use max(,0.001) is for the case where there is 0 match meaning between the 2 sentences
         cosine = c / max(float((sum(l1)*sum(l2))**0.5), 0.001)
-        print(f' similarity between event "{X}" and scenario "{Y}": ',
-              '\033[1m' + str(cosine) + '\033[0m')
+        if EXPLAIN:
+            print(f' similarity between event "{X}" and scenario "{Y}": ',
+                  '\033[1m' + str(cosine) + '\033[0m')
         return cosine
 
     def find_principles(self, event):

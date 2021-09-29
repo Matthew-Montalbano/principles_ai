@@ -35,9 +35,10 @@ def principle_from_event():
         return jsonify({'hello': "world"}), 200
     else:
         body = request.json
-        event = body['event']
-        print(event)
-        return jsonify({'event': event, 'principles': ml_client.find_principles(event)}), 200
+        # there's also a body['userId']
+        events = body['events']
+        print(events)
+        return jsonify({'allPrinciples': list(map(lambda event: {'event': event, 'principles': ml_client.find_principles(event)}, events))}), 200
 
 
 @app.route('/verifyGoogleAuthCode', methods=['POST'])
@@ -51,9 +52,9 @@ def verify_google_auth_code():
 
     # Call the Calendar API
     now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
-    print('Getting the upcoming 10 events')
+    print('Getting the upcoming 1 events')
     events_result = service.events().list(calendarId='primary', timeMin=now,
-                                          maxResults=10, singleEvents=True,
+                                          maxResults=1, singleEvents=True,
                                           orderBy='startTime').execute()
     events = events_result.get('items', [])
 

@@ -118,4 +118,5 @@ class UpNlpClient:
     def find_principles(self, event):
         sorted_sp_paris = sorted([(self.check_2_sentence_similarities(
             event, row['scenario']), row['principle']) for idx, row in self.sp_df.iterrows()])[::-1]
-        return [pair[1] for pair in sorted_sp_paris if pair[0]][:5]
+        results = [pair[1] for pair in sorted_sp_paris if pair[0]][:3]
+        return results

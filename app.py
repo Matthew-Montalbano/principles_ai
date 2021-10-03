@@ -46,7 +46,7 @@ def verify_google_auth_code():
     body = request.get_json()
     print(f'Request body {body}')
     flow.fetch_token(code=body['code'])
-    print(f'Creds {flow.credentials}')
+    # print(f'Creds {flow.credentials.refresh_token}') to get refresh token
 
     service = build('calendar', 'v3', credentials=flow.credentials)
 

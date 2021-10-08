@@ -13,7 +13,7 @@ app = Flask(__name__)
 flow = Flow.from_client_secrets_file(
     './auth/desktop-google-oauth.json',
     scopes=['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/userinfo.profile',
-            'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/calendar.app.created', 'openid', 'https://www.googleapis.com/auth/calendar.events'],
+            'https://www.googleapis.com/auth/userinfo.email', 'openid', 'https://www.googleapis.com/auth/calendar.events'],
     redirect_uri='postmessage',
 )
 ml_client = UpNlpClient('principles.csv')

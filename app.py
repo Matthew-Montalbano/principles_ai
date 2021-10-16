@@ -72,39 +72,45 @@ def num_events_to_notion():
     if not user_info:
         return 'User not registered cannot continue', 500
 
-    try:
-        scenarios = nc.get_scenarios_table()
-        events = gc.list_calendar_events(
-            calendar_id=body['calendarId'], num_days=body['numDays'])
-        for event in events:
+    # try:
+    scenarios = nc.get_scenarios_table()
+    events = gc.list_calendar_events(
+        calendar_id=body['calendarId'], num_days=body['numDays'])
+    for event in events:
+        import time
+        time.sleep(6)
+        sub_event = {
+            'event_title': event.get('summary'),
+            'event_location': event.get('location', 'N/A'),
+            'event_participants': 'N/A',
+            'event_time': 'N/A',
+            'event_duration': 'N/A'
+        }
+        
+        principle_scenario_pairs_df = ml_client.gpt3_find_matching_scenarios(sub_event, scenarios)
+        principles_request_list = principle_scenario_pairs_df["principles"].tolist()
+        print(f'principles_request_list: {principles_request_list}')
+        principles_df = nc.get_principles_from_list(principles_request_list)
+        print(principles_df)
+        event_body = ml_client.format_principles(principles_df, principle_scenario_pairs_df)
 
-            sub_event = {
-                'event_title': event.get('summary'),
-                'event_location': event.get('location', 'N/A'),
-                'event_participants': 'N/A',
-                'event_time': 'N/A',
-                'event_duration': 'N/A'
-            }
-
-            # something like 'principles': ml_client.function_name(sub_event, scenarios)
-
-            newEvent = {
-                'calendar_id': body['calendarId'],
-                'user_name': user_info['name'],
-                'user_email': user_info['email'],
-                'event_id': event.get('id'),
-                'location': event.get('location', ''),
-                'event_name': event.get('summary'),
-                'event_description': event.get('description', ''),
-                'principles': ml_client.find_principles(event.get('summary', [])),
-            }
-            if nc.create_page(newEvent):
-                print(f"Added {newEvent['event_name']} to notion")
-            else:
-                print(f"Could not add {newEvent['event_name']} to notion")
-        return 'Events successfully created', 200
-    except:
-        return 'Server error', 500
+        newEvent = {
+            'calendar_id': body['calendarId'],
+            'user_name': user_info['name'],
+            'user_email': user_info['email'],
+            'event_id': event.get('id'),
+            'location': event.get('location', ''),
+            'event_name': event.get('summary'),
+            'event_description': event.get('description', ''),
+            'principles': event_body,
+        }
+        if nc.create_page(newEvent):
+            print(f"Added {newEvent['event_name']} to notion")
+        else:
+            print(f"Could not add {newEvent['event_name']} to notion")
+    return 'Events successfully created', 200
+# except:
+    # return 'Server error', 500
 
 
 @app.route('/allUnaddedNotionEventsToCalendar', methods=['POST'])
@@ -133,10 +139,26 @@ def notion_events_to_calendar():
 @app.route('/testNotion', methods=['GET'])
 def test_notion():
     print(nc.get_scenarios_table())
-    print(nc.get_principles_from_list(
-        ['26d47288c7df43eea32bea38e8fa87b2', '8e3ee338b4eb40f29f76f61146c44fbc']))
+    scenarios_df = nc.get_scenarios_table()
+    event = {
+        "event_title" : "Effective Altruism Social event",
+        "event_location" : "N/A",
+        "event_participants" : "N/A",
+        "event_time" : "2021, Sep 25, 9pm",
+        "event_duration" : "N/A"
+    }
+    
+    principle_scenario_pairs_df = ml_client.gpt3_find_matching_scenarios(event, scenarios_df)
+    principles_request_list = principle_scenario_pairs_df["principles"].tolist()
+    print(f'principles_request_list: {principles_request_list}')
+    principles_df = nc.get_principles_from_list(principles_request_list)
+    print(principles_df)
+    event_body = ml_client.format_principles(principles_df, principle_scenario_pairs_df)
+    print(f'event_body: {event_body}')
     return 'nice', 200
 
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)  # run our Flask app
+
+

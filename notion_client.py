@@ -194,7 +194,6 @@ class NotionClient:
                 for source in props.get('Sources').get('relation'):
                     source_id = source.get('id')
                     if source_id in source_cache:
-                        print(source_cache.get(source_id))
                         new_obj['source'].append(source_cache.get(source_id))
                     else:
                         new_source = json.loads(

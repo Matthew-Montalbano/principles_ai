@@ -216,10 +216,10 @@ class UpNlpClient:
             # import pdb; pdb.set_trace()
             scenario = principle_scenario_pairs_df.loc[principle_scenario_pairs_df['principles'] == row['id'], 'scenarios'].tolist()[
                 0]
-            problem = f'👀 {scenario}?'
-            principle = row['principle'].replace("\n", "")
-            reminder = f'💡 Reminder: {principle}'
-            notes = '🔎  ' + row['notes']
-            source = '🔗 By: ' + row['source']
-            results.append('\n'.join([problem, reminder, notes, source]))
+            new_principle = [f'👀 {scenario}?', f"💡 Reminder: {row['principle'].replace('\n', '')}"]
+            if row['notes'] != '':
+                new_principle.append('🔎  ' + row['notes'])
+            if row['source'] != '':
+                new_principle.append('🔗 From: ' + row['source'])
+            results.append('\n'.join(new_principle))
         return results

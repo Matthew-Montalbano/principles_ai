@@ -14,10 +14,9 @@ ml_client = UpNlpClient('principles.csv')
 gc = GapiCalendarClient()
 nc = NotionClient(notion_key=config('NOTION_KEY'),
                   notion_db=config('NOTION_MAIN_DB'))
-is_gapi = gc.has_creds()
 flow = None
 
-if not is_gapi:
+if not gc.has_creds():
     flow = Flow.from_client_secrets_file(
         './auth/desktop-google-oauth.json',
         scopes=SCOPES,
@@ -28,7 +27,7 @@ if not is_gapi:
 def gapi_auth_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not is_gapi:
+        if not gc.has_creds():
             return 'Need to authenticate GAPI first', 401
         return f(*args, **kwargs)
     return decorated_function
@@ -52,8 +51,7 @@ def principle_from_event():
 def create_google_credentials_from_code():
     body = request.get_json()
     flow.fetch_token(code=body['code'])
-    if gc.setCredentials(flow.credentials):
-        is_gapi = gc.has_creds()
+    if gc.setCredentials(flow.credentials) and gc.has_creds():
         return 'Credentials created', 200
     else:
         return 'Error', 500

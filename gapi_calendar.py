@@ -41,7 +41,7 @@ class GapiCalendarClient():
             return False
 
     def list_all_calendars(self):
-        return list(filter(lambda cal: cal['selected'], self.service.calendarList().list().execute().get('items', [])))
+        return list(filter(lambda cal: cal.get('selected'), self.service.calendarList().list().execute().get('items', [])))
 
     def list_calendar_events(self, calendar_id, num_days):
         utc_now = datetime.datetime.utcnow()

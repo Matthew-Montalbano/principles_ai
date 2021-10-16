@@ -9,7 +9,7 @@ def notionPropertiesToObject(p):
         'page_id': p['id'],
         'event_id': p['properties']['Event ID']['title'][0]['plain_text'],
         'event_name': p['properties']['Event Name']['rich_text'][0]['plain_text'],
-        'principles': p['properties']['principlesAiPicked']['rich_text'][0]['plain_text']
+        'principles': p['properties']['Principles Handpicked']['rich_text'][0]['plain_text']
     }
 
 
@@ -50,6 +50,8 @@ class NotionClient:
         }
 
     def create_page(self, event):
+        print(f"Adding {event.get('event_name')} to Notion")
+        print(event)
         new_page = {
             'parent': {
                 'database_id': self.notion_db
@@ -94,6 +96,12 @@ class NotionClient:
                             event.get('principles'))}}
                     ]
                 },
+                'Principles Handpicked': {
+                    'rich_text': [
+                        {'text': {'content': '\n---\n'.join(
+                            event.get('principles'))}}
+                    ]
+                },
                 'Added?': {
                     'checkbox': False
                 }
@@ -102,7 +110,7 @@ class NotionClient:
         }
         res = r.post('https://api.notion.com/v1/pages',
                      data=json.dumps(new_page), headers=self.headers)
-        print(res)
+        print(res.text)
         if res.status_code == 200:
             return True
         else:

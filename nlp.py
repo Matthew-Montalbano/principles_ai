@@ -118,20 +118,20 @@ class UpNlpClient:
         return cosine
 
     def find_principles(self, event):
-        #TODO: need to delete this code at the end
+        # TODO: need to delete this code at the end
         sorted_sp_paris = sorted([(self.check_2_sentence_similarities(
             event, row['scenario']), row['principle']) for idx, row in self.sp_df.iterrows()])[::-1]
         results = [pair[1] for pair in sorted_sp_paris if pair[0]][:3]
         return results
 
-    def gpt3_classify_event(self, 
-        event_title,
-        event_location = "N/A",
-        event_participants = "N/A",
-        event_time = "2021, Sep 25, 4pm",
-        event_duration = ""):
+    def gpt3_classify_event(self,
+                            event_title,
+                            event_location="N/A",
+                            event_participants="N/A",
+                            event_time="2021, Sep 25, 4pm",
+                            event_duration=""):
 
-        #TODO: add this to private key
+        # TODO: add this to private key
         openai.api_key = config('OPENAI_KEY')
 
         for number_of_try in range(10):
@@ -147,16 +147,17 @@ class UpNlpClient:
                 frequency_penalty=0,
                 presence_penalty=0,
                 stop=["###"]
-                )
-            #TODO: find out if there could ever be a response['choices'][0]['text']
+            )
+            # TODO: find out if there could ever be a response['choices'][0]['text']
             text = response['choices'][0]['text']
             if len(text) > 10:
-                print(f'OpenAI reurned text: \n ------begin------\n{text}\n------end------')
+                print(
+                    f'OpenAI reurned text: \n ------begin------\n{text}\n------end------')
                 end_idx = text.find('\n')
                 comma_idx = text.find(",")
-                start_idx = comma_idx-4 #TODO: improve this logic to include the cases not 4
+                start_idx = comma_idx-4  # TODO: improve this logic to include the cases not 4
                 return text[start_idx:end_idx]
-                
+
         return ""
 
     def gpt3_find_matching_scenarios(self, event, scenarios_df):
@@ -169,20 +170,22 @@ class UpNlpClient:
         prediction_list = predictions.split(',')
         event_summary = prediction_list[-1]
         event_tags = prediction_list[:-1]
-        
-        # find matches 
+
+        # find matches
         scenarios_df['matching_score'] = 0
         for i, row in scenarios_df.iterrows():
-            #TODO: convert the event_tags and row['tags'] to set will speed this up
+            # TODO: convert the event_tags and row['tags'] to set will speed this up
             score = len([word for word in row['tags'] if word in event_tags])
-            scenarios_df.at[i,'matching_score'] = score
-        
-        scenarios_df = scenarios_df[scenarios_df['matching_score'] !=0]
-        top3_df = scenarios_df.sort_values(['matching_score'], ascending=[False]).head(3)
+            scenarios_df.at[i, 'matching_score'] = score
+
+        scenarios_df = scenarios_df[scenarios_df['matching_score'] != 0]
+        top3_df = scenarios_df.sort_values(
+            ['matching_score'], ascending=[False]).head(3)
         print(top3_df)
         # return top3_df['scenarios'].tolist()
-        
-        principle_scenario_pairs_df = pd.DataFrame(columns = ["principles", "scenarios"])
+
+        principle_scenario_pairs_df = pd.DataFrame(
+            columns=["principles", "scenarios"])
         principle_scenario_pairs_df["scenarios"] = []
         # make principle_scenario_pairs, the scencario here will be useful for formatting principles later
         for i, row in top3_df.iterrows():
@@ -190,7 +193,8 @@ class UpNlpClient:
                 "principles": row['principles'][0],
                 "scenarios": row['scenarios']
             }
-            principle_scenario_pairs_df = principle_scenario_pairs_df.append(row_to_add, ignore_index = True)
+            principle_scenario_pairs_df = principle_scenario_pairs_df.append(
+                row_to_add, ignore_index=True)
             # for principle_id in row['principles']:
             #     import pdb; pdb.set_trace()
             #     if principle_id not in principle_scenario_pairs_df['principles']:
@@ -201,22 +205,21 @@ class UpNlpClient:
             #         principle_scenario_pairs_df = principle_scenario_pairs_df.append(row_to_add, ignore_index = True)
             #     else:
             #         principle_scenario_pairs_df.loc[principle_scenario_pairs_df['principles'] == principle_id, 'scenarios'] += [row['scenarios']]
-                
+
         print(f'principle_scenario_pairs: {principle_scenario_pairs_df}')
 
-        return principle_scenario_pairs_df 
+        return principle_scenario_pairs_df
 
     def format_principles(self, principles_df, principle_scenario_pairs_df):
         results = []
         for i, row in principles_df.iterrows():
             # import pdb; pdb.set_trace()
-            scenario = principle_scenario_pairs_df.loc[principle_scenario_pairs_df['principles'] == row['id'], 'scenarios'].tolist()[0]
+            scenario = principle_scenario_pairs_df.loc[principle_scenario_pairs_df['principles'] == row['id'], 'scenarios'].tolist()[
+                0]
             problem = f'👀 {scenario}?'
             principle = row['principle'].replace("\n", "")
             reminder = f'💡 Reminder: {principle}'
             notes = '🔎  ' + row['notes']
             source = '🔗 By: ' + row['source']
-            seperator = "-----"
-            results.append('\n'.join([seperator, problem, reminder, notes, source]))
+            results.append('\n'.join([problem, reminder, notes, source]))
         return results
-        

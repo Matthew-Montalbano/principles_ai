@@ -6,6 +6,7 @@ from nltk.tokenize import word_tokenize
 import pandas as pd
 import openai
 from decouple import config
+from random import randint
 
 EXPLAIN = False
 
@@ -189,8 +190,11 @@ class UpNlpClient:
         principle_scenario_pairs_df["scenarios"] = []
         # make principle_scenario_pairs, the scencario here will be useful for formatting principles later
         for i, row in top3_df.iterrows():
+            
+            num_principles = len(row['principles'])
+            principle_idx = randint(0,num_principles-1)
             row_to_add = {
-                "principles": row['principles'][0],
+                "principles": row['principles'][principle_idx],
                 "scenarios": row['scenarios']
             }
             principle_scenario_pairs_df = principle_scenario_pairs_df.append(

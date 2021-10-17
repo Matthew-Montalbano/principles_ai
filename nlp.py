@@ -180,21 +180,28 @@ class UpNlpClient:
             scenarios_df.at[i, 'matching_score'] = score
 
         scenarios_df = scenarios_df[scenarios_df['matching_score'] != 0]
-        top3_df = scenarios_df.sort_values(
-            ['matching_score'], ascending=[False]).head(3)
-        print(top3_df)
-        # return top3_df['scenarios'].tolist()
+        top2_df = scenarios_df.sort_values(
+            ['matching_score'], ascending=[False]).head(2)
+        print(top2_df)
+        # return top2_df['scenarios'].tolist()
 
         principle_scenario_pairs_df = pd.DataFrame(
             columns=["principles", "scenarios"])
         principle_scenario_pairs_df["scenarios"] = []
+        found_principles = []
         # make principle_scenario_pairs, the scencario here will be useful for formatting principles later
-        for i, row in top3_df.iterrows():
-            
+        for i, row in top2_df.iterrows():
             num_principles = len(row['principles'])
-            principle_idx = randint(0,num_principles-1)
+            principle_idx = randint(0, num_principles-1)
+            new_principle = row['principles'][principle_idx]
+
+            while (new_principle in found_principles):
+                principle_idx = randint(0, num_principles-1)
+                new_principle = row['principles'][principle_idx]
+            found_principles.append(new_principle)
+
             row_to_add = {
-                "principles": row['principles'][principle_idx],
+                "principles": new_principle,
                 "scenarios": row['scenarios']
             }
             principle_scenario_pairs_df = principle_scenario_pairs_df.append(
@@ -220,7 +227,8 @@ class UpNlpClient:
             # import pdb; pdb.set_trace()
             scenario = principle_scenario_pairs_df.loc[principle_scenario_pairs_df['principles'] == row['id'], 'scenarios'].tolist()[
                 0]
-            new_principle = [f'👀 {scenario}?', f"💡 Reminder: {row['principle'].replace('\n', '')}"]
+            principle = row['principle'].replace('\n', '')
+            new_principle = [f'👀 {scenario}?', f"💡 Reminder: {principle}"]
             if row['notes'] != '':
                 new_principle.append('🔎  ' + row['notes'])
             if row['source'] != '':

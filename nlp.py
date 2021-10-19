@@ -187,6 +187,7 @@ class UpNlpClient:
         number_senarios_for_similarity_comparison = 8
         top_senarios_df = scenarios_df.sort_values(
             ['matching_score'], ascending=[False]).head(number_senarios_for_similarity_comparison)
+        print("----filter senarios by number of matching tags----")
         print(top_senarios_df)
         
         # track scentence matching score for top scenarios
@@ -195,6 +196,8 @@ class UpNlpClient:
             # TODO: convert the event_tags and row['tags'] to set will speed this up
             score = self.check_2_sentence_similarities(row['scenarios'], event['event_title'])
             top_senarios_df.at[i, 'scentence_similarity'] = score
+        print("-----track scentence matching score for top scenarios---")
+        print(top_senarios_df)
 
         # filter senarios by scentence_similarity
         number_senarios_for_getting_principles = 2

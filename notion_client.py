@@ -151,6 +151,7 @@ class NotionClient:
         results = json.loads(res.text)['results']
 
         new_obj = {
+            'scenarios_human': [],
             'scenarios': [],
             'tags': [],
             'principles': [],
@@ -158,8 +159,10 @@ class NotionClient:
 
         for result in results:
             props = result['properties']
-            new_obj['scenarios'].append(props.get('Scenario').get(
+            new_obj['scenarios_human'].append(props.get('Scenario').get(
                 'title')[0].get('plain_text'))
+            new_obj['scenarios'].append(
+                props.get('Scenario Summary').get('rich_text')[0].get('plain_text'))
             new_obj['tags'].append(
                 list(map(lambda x: x.get('name'), props.get('Tags').get('multi_select'))))
             new_obj['principles'].append(

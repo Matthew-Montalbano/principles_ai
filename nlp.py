@@ -202,7 +202,7 @@ class UpNlpClient:
 
             row_to_add = {
                 "principles": new_principle,
-                "scenarios": row['scenarios']
+                "scenarios": row['scenarios_human']
             }
             principle_scenario_pairs_df = principle_scenario_pairs_df.append(
                 row_to_add, ignore_index=True)
@@ -225,7 +225,7 @@ class UpNlpClient:
         results = []
         for i, row in principles_df.iterrows():
             # import pdb; pdb.set_trace()
-            scenario = principle_scenario_pairs_df.loc[principle_scenario_pairs_df['principles'] == row['id'], 'scenarios'].tolist()[
+            scenario = principle_scenario_pairs_df.loc[principle_scenario_pairs_df['principles'] == row['id'], 'scenarios_human'].tolist()[
                 0]
             principle = row['principle'].replace('\n', '')
             new_principle = [f'👀 {scenario}?', f"💡 Reminder: {principle}"]

@@ -225,7 +225,7 @@ class UpNlpClient:
         results = []
         for i, row in principles_df.iterrows():
             # import pdb; pdb.set_trace()
-            scenario = principle_scenario_pairs_df.loc[principle_scenario_pairs_df['principles'] == row['id'], 'scenarios_human'].tolist()[
+            scenario = principle_scenario_pairs_df.loc[principle_scenario_pairs_df['principles'] == row['id'], 'scenarios'].tolist()[
                 0]
             principle = row['principle'].replace('\n', '')
             new_principle = [f'👀 {scenario}?', f"💡 Reminder: {principle}"]

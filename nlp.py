@@ -163,7 +163,6 @@ class UpNlpClient:
 
     def gpt3_find_matching_scenarios(self, event, scenarios_df):
 
-
         # Get predictions
         event_values = [v for v in event.values()]
         predictions = self.gpt3_classify_event(event_values)
@@ -180,9 +179,12 @@ class UpNlpClient:
             # TODO: convert the event_tags and row['tags'] to set will speed this up
             score = len([word for word in row['tags'] if word in event_tags])
             scenarios_df.at[i, 'matching_score'] = score
-
+        print("----scenario list with machine score----")
+        print(scenarios_df)
+        print(scenarios_df)
+        
         # filter senarios by number of matching tags
-        number_matching_tags_threashold = 2
+        number_matching_tags_threashold = min(1, max(scenarios_df['matching_score'].tolist()))
         scenarios_df = scenarios_df[scenarios_df['matching_score'] >= number_matching_tags_threashold]
         number_senarios_for_similarity_comparison = 8
         top_senarios_df = scenarios_df.sort_values(
@@ -191,14 +193,14 @@ class UpNlpClient:
         print(top_senarios_df)
         
         # track scentence matching score for top scenarios
-        top_senarios_df['scentence_similarity'] = 0
-        for i, row in top_senarios_df.iterrows():
+        top_senarios_df['scentence_similarity'] = 0.0
+        for i, row in top_senarios_df.iterrows():    
             # TODO: convert the event_tags and row['tags'] to set will speed this up
             score = self.check_2_sentence_similarities(row['scenarios'], event['event_title'])
             top_senarios_df.at[i, 'scentence_similarity'] = score
         print("-----track scentence matching score for top scenarios---")
         print(top_senarios_df)
-
+        
         # filter senarios by scentence_similarity
         number_senarios_for_getting_principles = 2
         top_senarios_df = top_senarios_df.sort_values(
@@ -208,7 +210,7 @@ class UpNlpClient:
             columns=["principles", "scenarios"])
         principle_scenario_pairs_df["scenarios"] = []
         found_principles = []
-
+        
         # make principle_scenario_pairs, the scencario here will be useful for formatting principles later
         for i, row in top_senarios_df.iterrows():
             num_principles = len(row['principles'])
@@ -222,7 +224,7 @@ class UpNlpClient:
 
             row_to_add = {
                 "principles": new_principle,
-                "scenarios": row['scenarios_human']
+                "scenarios_human": row['scenarios_human']
             }
             principle_scenario_pairs_df = principle_scenario_pairs_df.append(
                 row_to_add, ignore_index=True)
@@ -244,7 +246,6 @@ class UpNlpClient:
     def format_principles(self, principles_df, principle_scenario_pairs_df):
         results = []
         for i, row in principles_df.iterrows():
-            # import pdb; pdb.set_trace()
             scenario = principle_scenario_pairs_df.loc[principle_scenario_pairs_df['principles'] == row['id'], 'scenarios_human'].tolist()[
                 0]
             principle = row['principle'].replace('\n', '')

@@ -3,6 +3,7 @@ from functools import wraps
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from decouple import config
+import time
 
 from utils import SCOPES
 from nlp import UpNlpClient
@@ -63,6 +64,15 @@ def list_all_calendars():
     return jsonify(gc.list_all_calendars()), 200
 
 
+@app.route('/listAllEventsFromCalendar', methods=['POST'])
+@gapi_auth_required
+def list_all_events_from_calendar():
+    body = request.get_json()
+    events = gc.list_calendar_events(
+        calendar_id=body['calendarId'], num_days=body['numDays'])
+    return jsonify(events), 200
+
+
 @app.route('/numEventsToNotion', methods=['POST'])
 @gapi_auth_required
 def num_events_to_notion():
@@ -77,8 +87,7 @@ def num_events_to_notion():
     events = gc.list_calendar_events(
         calendar_id=body['calendarId'], num_days=body['numDays'])
     for event in events:
-        import time
-        time.sleep(6)
+        time.sleep(3)
         sub_event = {
             'event_title': event.get('summary'),
             'event_location': event.get('location', 'N/A'),
@@ -86,13 +95,16 @@ def num_events_to_notion():
             'event_time': 'N/A',
             'event_duration': 'N/A'
         }
-        
-        principle_scenario_pairs_df = ml_client.gpt3_find_matching_scenarios(sub_event, scenarios)
-        principles_request_list = principle_scenario_pairs_df["principles"].tolist()
+
+        principle_scenario_pairs_df = ml_client.gpt3_find_matching_scenarios(
+            sub_event, scenarios)
+        principles_request_list = principle_scenario_pairs_df["principles"].tolist(
+        )
         print(f'principles_request_list: {principles_request_list}')
         principles_df = nc.get_principles_from_list(principles_request_list)
         print(principles_df)
-        event_body = ml_client.format_principles(principles_df, principle_scenario_pairs_df)
+        event_body = ml_client.format_principles(
+            principles_df, principle_scenario_pairs_df)
 
         newEvent = {
             'calendar_id': body['calendarId'],
@@ -141,24 +153,25 @@ def test_notion():
     print(nc.get_scenarios_table())
     scenarios_df = nc.get_scenarios_table()
     event = {
-        "event_title" : "Effective Altruism Social event",
-        "event_location" : "N/A",
-        "event_participants" : "N/A",
-        "event_time" : "2021, Sep 25, 9pm",
-        "event_duration" : "N/A"
+        "event_title": "Effective Altruism Social event",
+        "event_location": "N/A",
+        "event_participants": "N/A",
+        "event_time": "2021, Sep 25, 9pm",
+        "event_duration": "N/A"
     }
-    
-    principle_scenario_pairs_df = ml_client.gpt3_find_matching_scenarios(event, scenarios_df)
-    principles_request_list = principle_scenario_pairs_df["principles"].tolist()
+
+    principle_scenario_pairs_df = ml_client.gpt3_find_matching_scenarios(
+        event, scenarios_df)
+    principles_request_list = principle_scenario_pairs_df["principles"].tolist(
+    )
     print(f'principles_request_list: {principles_request_list}')
     principles_df = nc.get_principles_from_list(principles_request_list)
     print(principles_df)
-    event_body = ml_client.format_principles(principles_df, principle_scenario_pairs_df)
+    event_body = ml_client.format_principles(
+        principles_df, principle_scenario_pairs_df)
     print(f'event_body: {event_body}')
     return 'nice', 200
 
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)  # run our Flask app
-
-

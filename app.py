@@ -77,6 +77,7 @@ def list_all_events_from_calendar():
 @gapi_auth_required
 def num_events_to_notion():
     body = request.get_json()
+    print(f"Received request, processing {body['calendarId']}")
     user_info = nc.get_user_info(calendar_id=body['calendarId'])
 
     if not user_info:
@@ -88,15 +89,16 @@ def num_events_to_notion():
         calendar_id=body['calendarId'], num_days=body['numDays'])
     for event in events:
         time.sleep(3)
+        num_attendees = event.get('attendees', [])
         sub_event = {
             'event_title': event.get('summary'),
             'event_location': event.get('location', 'N/A'),
-            'event_participants': 'N/A',
+            'event_participants': len(num_attendees),
             'event_time': 'N/A',
             'event_duration': 'N/A'
         }
 
-        principle_scenario_pairs_df = ml_client.gpt3_find_matching_scenarios(
+        (principle_scenario_pairs_df, openai_predictions) = ml_client.gpt3_find_matching_scenarios(
             sub_event, scenarios)
         principles_request_list = principle_scenario_pairs_df["principles"].tolist(
         )
@@ -114,6 +116,7 @@ def num_events_to_notion():
             'location': event.get('location', ''),
             'event_name': event.get('summary'),
             'event_description': event.get('description', ''),
+            'openai_predictions': openai_predictions,
             'principles': event_body,
         }
         if nc.create_page(newEvent):
@@ -151,6 +154,9 @@ def notion_events_to_calendar():
 @app.route('/testNotion', methods=['GET'])
 def test_notion():
     print(nc.get_scenarios_table())
+    print(gc.list_calendar_events(
+        calendar_id="openprinciples@gmail.com", num_days=1))
+    '''
     scenarios_df = nc.get_scenarios_table()
     event = {
         "event_title": "Effective Altruism Social event",
@@ -170,6 +176,8 @@ def test_notion():
     event_body = ml_client.format_principles(
         principles_df, principle_scenario_pairs_df)
     print(f'event_body: {event_body}')
+    '''
+
     return 'nice', 200
 
 

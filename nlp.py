@@ -7,6 +7,7 @@ import pandas as pd
 import openai
 from decouple import config
 from random import randint
+from operator import itemgetter
 
 EXPLAIN = False
 
@@ -125,13 +126,9 @@ class UpNlpClient:
         results = [pair[1] for pair in sorted_sp_paris if pair[0]][:3]
         return results
 
-    def gpt3_classify_event(self,
-                            event_title,
-                            event_location="N/A",
-                            event_participants="N/A",
-                            event_time="2021, Sep 25, 4pm",
-                            event_duration=""):
-
+    def gpt3_classify_event(self, event):
+        event_title, event_location, event_participants, event_time, event_duration = itemgetter(
+            'event_title', 'event_location', 'event_participants', 'event_time', 'event_duration')(event)
         # TODO: add this to private key
         openai.api_key = config('OPENAI_KEY')
 
@@ -157,15 +154,15 @@ class UpNlpClient:
                 end_idx = text.find('\n')
                 comma_idx = text.find(",")
                 start_idx = comma_idx-4  # TODO: improve this logic to include the cases not 4
-                return text[start_idx:end_idx]
+                openai_return = text[start_idx:end_idx]
+                return 'solo,'+openai_return if event_participants == 0 else 'group,'+openai_return
 
         return ""
 
     def gpt3_find_matching_scenarios(self, event, scenarios_df):
 
         # Get predictions
-        event_values = [v for v in event.values()]
-        predictions = self.gpt3_classify_event(event_values)
+        predictions = self.gpt3_classify_event(event)
         # predictions = 'work,group,offline,go to team social' #TODO: delete this to use the real prediction
         if not predictions:
             return []
@@ -244,7 +241,7 @@ class UpNlpClient:
 
         print(f'principle_scenario_pairs: {principle_scenario_pairs_df}')
 
-        return principle_scenario_pairs_df
+        return (principle_scenario_pairs_df, predictions)
 
     def format_principles(self, principles_df, principle_scenario_pairs_df):
         results = []

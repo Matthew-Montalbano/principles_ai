@@ -102,6 +102,12 @@ class NotionClient:
                             event.get('principles'))}}
                     ]
                 },
+                'openAiPredictions': {
+                    'rich_text': [
+                        {'text': {'content':
+                                  event.get('openai_predictions')}}
+                    ]
+                },
                 'Added?': {
                     'checkbox': False
                 }

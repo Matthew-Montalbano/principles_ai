@@ -151,10 +151,7 @@ class UpNlpClient:
             if len(text) > 10:
                 print(
                     f'OpenAI reurned text: \n ------begin------\n{text}\n------end------')
-                end_idx = text.find('\n')
-                comma_idx = text.find(",")
-                start_idx = comma_idx-4  # TODO: improve this logic to include the cases not 4
-                openai_return = text[start_idx:end_idx]
+                openai_return = text.strip()
                 return 'solo,'+openai_return if event_participants == 0 else 'group,'+openai_return
 
         return ""

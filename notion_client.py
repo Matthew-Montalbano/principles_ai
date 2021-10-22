@@ -168,7 +168,7 @@ class NotionClient:
             new_obj['scenarios_human'].append(props.get('Scenario').get(
                 'title')[0].get('plain_text'))
             new_obj['scenarios'].append(
-                props.get('Scenario Summary').get('rich_text')[0].get('plain_text'))
+                props.get('Scenario Classification').get('rich_text')[0].get('plain_text'))
             new_obj['tags'].append(
                 list(map(lambda x: x.get('name'), props.get('Tags').get('multi_select'))))
             new_obj['principles'].append(

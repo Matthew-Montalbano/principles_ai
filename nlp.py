@@ -175,7 +175,6 @@ class UpNlpClient:
             scenarios_df.at[i, 'matching_score'] = score
         print("----scenario list with machine score----")
         print(scenarios_df)
-        print(scenarios_df)
 
         # filter senarios by number of matching tags
         number_matching_tags_threashold = min(

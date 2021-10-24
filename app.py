@@ -132,6 +132,7 @@ def num_events_to_notion():
 @gapi_auth_required
 def notion_events_to_calendar():
     calendar_id = request.get_json()['calendarId']
+    print(f"Received request, processing {calendar_id}")
     events = nc.get_all_unadded_events_for_calendar(calendar_id)
     for event in events:
         base_event = gc.get_event(

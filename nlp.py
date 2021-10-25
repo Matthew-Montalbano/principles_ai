@@ -177,7 +177,7 @@ class UpNlpClient:
         print(scenarios_df)
 
         # filter senarios by number of matching tags
-        number_matching_tags_threashold = min(
+        number_matching_tags_threashold = max(
             1, max(scenarios_df['matching_score'].tolist()))
         scenarios_df = scenarios_df[scenarios_df['matching_score']
                                     >= number_matching_tags_threashold]

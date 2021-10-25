@@ -56,7 +56,7 @@ class GapiCalendarClient():
             calendarId=calendar_id, timeMin=utc_now.isoformat() + 'Z', timeMax=utc_max.isoformat() + 'Z', orderBy='startTime', singleEvents=True).execute()
 
         events = events_results.get('items', [])
-        return events
+        return filter(lambda e: e.get('summary') != "Ultrabrain reminder", events)
 
     def get_event(self, calendar_id, event_id):
         return self.service.events().get(calendarId=calendar_id, eventId=event_id).execute()

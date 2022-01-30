@@ -112,18 +112,21 @@ def list_all_events_from_calendar():
 def num_events_to_notion():
     body = request.get_json()
     print(f"Received request, processing {body['calendarId']}")
+    
+    #getting user information from https://www.notion.so/openprinciples/f14457c2d77b488d8d379c637cce6e76?v=1296c84bbe43498d9edb5fdd7697952d
+    #a user needs a valid calendarId to continue
     user_info = nc.get_user_info(calendar_id=body["calendarId"])
 
     if not user_info:
         return "User not registered cannot continue", 500
 
-    # try:
+    
     scenarios = nc.get_scenarios_table()
     events = gc.list_calendar_events(
         calendar_id=body["calendarId"], num_days=body["numDays"]
     )
     for event in events:
-        time.sleep(3)
+        time.sleep(3) #avoids hitting OpenAi rate limit
         num_attendees = event.get("attendees", [])
         sub_event = {
             "event_title": event.get("summary"),

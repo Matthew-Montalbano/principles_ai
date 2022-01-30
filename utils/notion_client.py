@@ -156,7 +156,7 @@ class NotionClient:
             new_obj["scenarios"].append(
                 props.get("Scenario Classification")
                 .get("rich_text")[0]
-                .get("plain_text")
+                .get("plain_text") if len(props.get("Scenario Classification").get("rich_text")) > 0 else props.get("Scenario").get("title")[0].get("plain_text")
             )
             new_obj["tags"].append(
                 list(

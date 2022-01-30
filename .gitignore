@@ -1,2 +1,4 @@
 auth
+server_keys
+
 .env

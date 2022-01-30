@@ -6,4 +6,4 @@ For Conda Eevironment: https://towardsdatascience.com/a-guide-to-conda-environme
 
 For Exporting requirement.txt: https://pythonrepo.com/repo/bndr-pipreqs-python-package-dependency-management
 
-To run the code please use: python server.py
+To run the code please use: flask run

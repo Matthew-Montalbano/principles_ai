@@ -28,9 +28,11 @@ login_manager.init_app(app)
 
 web_client = WebApplicationClient(config("GOOGLE_CLIENT_ID"))
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.get(user_id)
+
 
 ml_client = UpNlpClient("principles.csv")
 nc = NotionClient(notion_key=config("NOTION_KEY"), notion_db=config("NOTION_MAIN_DB"))
@@ -43,6 +45,7 @@ if not gc.has_creds():
         scopes=SCOPES,
         redirect_uri="postmessage",
     )
+
 
 def gapi_auth_required(f):
     @wraps(f)
@@ -112,21 +115,21 @@ def list_all_events_from_calendar():
 def num_events_to_notion():
     body = request.get_json()
     print(f"Received request, processing {body['calendarId']}")
-    
-    #getting user information from https://www.notion.so/openprinciples/f14457c2d77b488d8d379c637cce6e76?v=1296c84bbe43498d9edb5fdd7697952d
-    #a user needs a valid calendarId to continue
+
+    # getting user information from https://www.notion.so/openprinciples/f14457c2d77b488d8d379c637cce6e76?v=1296c84bbe43498d9edb5fdd7697952d
+    # a user needs a valid calendarId to continue
     user_info = nc.get_user_info(calendar_id=body["calendarId"])
 
     if not user_info:
+        print("User not registered cannot continue")
         return "User not registered cannot continue", 500
 
-    
     scenarios = nc.get_scenarios_table()
     events = gc.list_calendar_events(
         calendar_id=body["calendarId"], num_days=body["numDays"]
     )
     for event in events:
-        time.sleep(3) #avoids hitting OpenAi rate limit
+        time.sleep(3)  # avoids hitting OpenAi rate limit
         num_attendees = event.get("attendees", [])
         sub_event = {
             "event_title": event.get("summary"),
@@ -186,6 +189,7 @@ def notion_events_to_calendar():
             if not nc.update_page(event["page_id"], {"Added?": {"checkbox": True}}):
                 raise Exception
     return "Done", 200
+
 
 @app.route("/")
 def index():
@@ -247,6 +251,9 @@ def callback():
     return redirect(url_for("index"))
 
 
-
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, ssl_context=("./server_keys/cert.pem", "./server_keys/key.pem"))
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        ssl_context=("./server_keys/cert.pem", "./server_keys/key.pem"),
+    )
